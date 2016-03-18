@@ -13,9 +13,9 @@ namespace Orleans.Runtime
     internal class GrainTypeManager
     {
         private IDictionary<string, GrainTypeData> grainTypes;
+        private GrainInterfaceMap grainInterfaceMap;
         private readonly IGrainFactory grainFactory;
         private readonly TraceLogger logger = TraceLogger.GetLogger("GrainTypeManager");
-        private readonly GrainInterfaceMap grainInterfaceMap;
         private readonly Dictionary<int, InvokerData> invokers = new Dictionary<int, InvokerData>();
         private static readonly object lockable = new object();
 
@@ -58,7 +58,7 @@ namespace Orleans.Runtime
 
             // 4. We scan types in memory for grain method invoker objects.
             InitializeInvokerMap(loader, strict);
-
+            
             InitializeInterfaceMap();
             StreamingInitialize();
         }
@@ -145,31 +145,9 @@ namespace Orleans.Runtime
 
         private void InitializeInterfaceMap()
         {
-            foreach (GrainTypeData grainType in grainTypes.Values)
-                AddToGrainInterfaceToClassMap(grainType.Type, grainType.RemoteInterfaceTypes, grainType.IsStatelessWorker);
+            grainInterfaceMap = GrainInterfaceMapper.BuildMap(grainTypes.Values, false);            
         }
-
-        private void AddToGrainInterfaceToClassMap(Type grainClass, IEnumerable<Type> grainInterfaces, bool isUnordered)
-        {
-            var grainClassCompleteName = TypeUtils.GetFullName(grainClass);
-            var isGenericGrainClass = grainClass.ContainsGenericParameters;
-            var grainClassTypeCode = CodeGeneration.GrainInterfaceUtils.GetGrainClassTypeCode(grainClass);
-            var placement = GrainTypeData.GetPlacementStrategy(grainClass);
-            var registrationStrategy = GrainTypeData.GetMultiClusterRegistrationStrategy(grainClass);
-
-            foreach (var iface in grainInterfaces)
-            {
-                var ifaceCompleteName = TypeUtils.GetFullName(iface);
-                var ifaceName = TypeUtils.GetRawClassName(ifaceCompleteName);
-                var isPrimaryImplementor = IsPrimaryImplementor(grainClass, iface);
-                var ifaceId = CodeGeneration.GrainInterfaceUtils.GetGrainInterfaceId(iface);
-                grainInterfaceMap.AddEntry(ifaceId, iface, grainClassTypeCode, ifaceName, grainClassCompleteName, 
-                    grainClass.Assembly.CodeBase, isGenericGrainClass, placement, registrationStrategy, isPrimaryImplementor);
-            }
-
-            if (isUnordered)
-                grainInterfaceMap.AddToUnorderedList(grainClassTypeCode);
-        }
+        
 
         private void StreamingInitialize()
         {
@@ -192,7 +170,7 @@ namespace Orleans.Runtime
         
         internal GrainInterfaceMap GetTypeCodeMap()
         {
-            // the map is immutable at this point
+            // the map is immutable at this point - should just expose interface
             return grainInterfaceMap;
         }
 

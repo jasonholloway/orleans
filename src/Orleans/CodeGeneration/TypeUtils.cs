@@ -249,7 +249,7 @@ namespace Orleans.Runtime
             return name.Contains("`") || name.Contains("[");
         }
 
-        public static string GetFullName(Type t, Language language = Language.CSharp)
+        public static string GetFullName(this Type t, Language language = Language.CSharp)
         {
             if (t == null) throw new ArgumentNullException("t");
             if (t.IsNested && !t.IsGenericParameter)
@@ -1112,5 +1112,17 @@ namespace Orleans.Runtime
                     return identifier;
             }
         }
+
+
+        internal static IEnumerable<Type> GetClasses(this Type @this) {            
+            if(@this == null) {
+                return Enumerable.Empty<Type>();
+            }
+
+            return new[] { @this }
+                    .Concat(@this.BaseType.GetClasses());
+        }
+
+
     }
 }
