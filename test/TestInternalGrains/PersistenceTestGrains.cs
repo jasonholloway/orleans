@@ -37,6 +37,8 @@ namespace UnitTests.Grains
         public SortedDictionary<T, T> SortedDict { get; set; }
     }
 
+
+
     [Orleans.Providers.StorageProvider(ProviderName = "test1")]
     public class PersistenceTestGrain : Grain<PersistenceTestGrainState>, IPersistenceTestGrain
     {
@@ -91,6 +93,14 @@ namespace UnitTests.Grains
             await ClearStateAsync();
         }
     }
+
+
+    [Orleans.Providers.StorageProvider(ProviderName = "test1")]
+    public class PersistenceTestGenericGrain<T> : PersistenceTestGrain, IPersistenceTestGenericGrain<T>
+    {
+        //...
+    }
+
 
     [Orleans.Providers.StorageProvider(ProviderName = "ErrorInjector")]
     public class PersistenceProviderErrorGrain : Grain<PersistenceTestGrainState>, IPersistenceProviderErrorGrain
