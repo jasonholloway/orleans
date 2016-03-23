@@ -195,4 +195,16 @@ namespace UnitTests.GrainInterfaces
 
         Task Add(B item);
     }
+
+    public interface INonGenericCastableGrain : IGrainWithGuidKey
+    {
+
+    }
+
+    public interface ISomeGenericGrain<T> : IGrainWithGuidKey
+    {
+        Task<string> Hello();
+    }
+
+
 }

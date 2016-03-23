@@ -596,4 +596,14 @@ namespace UnitTests.Grains
             return TaskDone.Done;
         }
     }
+
+
+    public class NonGenericCastableGrain : Grain, INonGenericCastableGrain, ISomeGenericGrain<string>
+    {
+        Task<string> ISomeGenericGrain<string>.Hello() {
+            return Task.FromResult("Hello!");
+        }
+    }
+
+
 }

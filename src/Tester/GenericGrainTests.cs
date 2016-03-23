@@ -688,5 +688,18 @@ namespace UnitTests.General
             result = await grain.GetCount();
             Assert.AreEqual(1, result);
         }
+
+        [TestMethod, TestCategory("Functional"), TestCategory("Generics")]
+        public async Task Generic_CastToGenericInterfaceAndCallMethod() 
+        {
+            var grain = GrainFactory.GetGrain<INonGenericCastableGrain>(Guid.NewGuid());
+
+            var castRef = grain.AsReference<ISomeGenericGrain<string>>();
+
+            var result = await castRef.Hello();
+
+            Assert.AreEqual(result, "Hello!");
+        }
+
     }
 }
