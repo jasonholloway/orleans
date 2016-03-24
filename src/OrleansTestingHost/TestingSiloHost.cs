@@ -283,27 +283,56 @@ namespace Orleans.TestingHost
             StopDefaultSilos();
         }
 
+
         /// <summary>
         /// Restart the default Primary and Secondary silos.
         /// </summary>
-        public void RestartDefaultSilos()
-        {
-            TestingSiloOptions primarySiloOptions = Primary.Options;
-            TestingSiloOptions secondarySiloOptions = Secondary.Options;
+        public void RestartDefaultSilos(bool pickNewDeploymentId = false) {
+            TestingSiloOptions primarySiloOptions = Primary != null ? Primary.Options : null;
+            TestingSiloOptions secondarySiloOptions = Secondary != null ? Secondary.Options : null;
             // Restart as the same deployment
             string deploymentId = DeploymentId;
 
             StopDefaultSilos();
 
-            DeploymentId = deploymentId;
-            primarySiloOptions.PickNewDeploymentId = false;
-            secondarySiloOptions.PickNewDeploymentId = false;
+            DeploymentId = pickNewDeploymentId ? null : deploymentId;
+            if(primarySiloOptions != null) {
+                primarySiloOptions.PickNewDeploymentId = pickNewDeploymentId;
+                Primary = StartOrleansSilo(Silo.SiloType.Primary, primarySiloOptions, InstanceCounter++);
+            }
+            if(secondarySiloOptions != null) {
+                secondarySiloOptions.PickNewDeploymentId = pickNewDeploymentId;
+                Secondary = StartOrleansSilo(Silo.SiloType.Secondary, secondarySiloOptions, InstanceCounter++);
+            }
 
-            Primary = StartOrleansSilo(Silo.SiloType.Primary, primarySiloOptions, InstanceCounter++);
-            Secondary = StartOrleansSilo(Silo.SiloType.Secondary, secondarySiloOptions, InstanceCounter++);
             WaitForLivenessToStabilizeAsync().Wait();
             GrainClient.Initialize();
         }
+
+
+
+
+        ///// <summary>
+        ///// Restart the default Primary and Secondary silos.
+        ///// </summary>
+        //public void RestartDefaultSilos()
+        //{
+        //    TestingSiloOptions primarySiloOptions = Primary.Options;
+        //    TestingSiloOptions secondarySiloOptions = Secondary.Options;
+        //    // Restart as the same deployment
+        //    string deploymentId = DeploymentId;
+
+        //    StopDefaultSilos();
+
+        //    DeploymentId = deploymentId;
+        //    primarySiloOptions.PickNewDeploymentId = false;
+        //    secondarySiloOptions.PickNewDeploymentId = false;
+
+        //    Primary = StartOrleansSilo(Silo.SiloType.Primary, primarySiloOptions, InstanceCounter++);
+        //    Secondary = StartOrleansSilo(Silo.SiloType.Secondary, secondarySiloOptions, InstanceCounter++);
+        //    WaitForLivenessToStabilizeAsync().Wait();
+        //    GrainClient.Initialize();
+        //}
 
         /// <summary>
         /// Start a Secondary silo with a given instanceCounter 
