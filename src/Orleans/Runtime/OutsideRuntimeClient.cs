@@ -40,7 +40,7 @@ namespace Orleans
 
         internal ClientStatisticsManager ClientStatistics;
         private readonly GrainId clientId;
-        private GrainTypeMap grainInterfaceMap;
+        private IGrainTypeResolver grainTypeResolver;
         private readonly ThreadTrackingStatistic incomingMessagesThreadTimeTracking;
 
         // initTimeout used to be AzureTableDefaultPolicies.TableCreationTimeout, which was 3 min
@@ -288,7 +288,7 @@ namespace Orleans
                     }
                 }
             );
-            grainInterfaceMap = transport.GetTypeCodeMap(grainFactory).Result;
+            grainTypeResolver = transport.GetGrainTypeResolver(grainFactory).Result;
             StreamingInitialize();
         }
 
@@ -892,7 +892,7 @@ namespace Orleans
 
         public IGrainTypeResolver GrainTypeResolver
         {
-            get { return grainInterfaceMap; }
+            get { return grainTypeResolver; }
         }
 
         public string CaptureRuntimeEnvironment()

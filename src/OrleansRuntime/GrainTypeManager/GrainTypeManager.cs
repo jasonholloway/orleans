@@ -59,7 +59,7 @@ namespace Orleans.Runtime
             // 4. We scan types in memory for grain method invoker objects.
             InitializeInvokerMap(loader, strict);
             
-            InitializeGrainTypeMap();
+            InitializeInterfaceMap();
             StreamingInitialize();
         }
 
@@ -143,7 +143,7 @@ namespace Orleans.Runtime
             }
         }
 
-        private void InitializeGrainTypeMap()
+        private void InitializeInterfaceMap()
         {
             grainTypeMap = GrainTypeMapper.BuildMap(grainTypes.Values, false);            
         }
@@ -168,7 +168,7 @@ namespace Orleans.Runtime
             return grainTypes.TryGetValue(name, out result);
         }
         
-        internal GrainTypeMap GetTypeCodeMap()
+        internal IGrainTypeResolver GetGrainTypeResolver()
         {
             // the map is immutable at this point - should just expose interface
             return grainTypeMap;

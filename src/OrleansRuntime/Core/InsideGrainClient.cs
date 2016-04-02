@@ -697,7 +697,7 @@ namespace Orleans.Runtime
 
         internal void Start()
         {
-            grainTypeResolver = typeManager.GetTypeCodeMap();
+            grainTypeResolver = typeManager.GetGrainTypeResolver();
         }
 
         public IGrainTypeResolver GrainTypeResolver

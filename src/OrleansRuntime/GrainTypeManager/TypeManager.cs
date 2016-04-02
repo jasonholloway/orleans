@@ -16,9 +16,9 @@ namespace Orleans.Runtime
         }
 
 
-        public Task<GrainTypeMap> GetTypeCodeMap(SiloAddress silo)
+        public Task<IGrainTypeResolver> GetGrainTypeResolver(SiloAddress silo)
         {
-            return Task.FromResult(grainTypeManager.GetTypeCodeMap());
+            return Task.FromResult(grainTypeManager.GetGrainTypeResolver());
         }
 
         public Task<Streams.ImplicitStreamSubscriberTable> GetImplicitStreamSubscriberTable(SiloAddress silo)
