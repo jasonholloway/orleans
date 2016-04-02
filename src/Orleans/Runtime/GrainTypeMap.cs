@@ -7,7 +7,7 @@ using Orleans.GrainDirectory;
 
 namespace Orleans.Runtime
 {
-    internal interface IGrainTypeResolver
+    internal interface IGrainTypeMap
     {
         bool TryGetGrainClassData(Type grainInterfaceType, out GrainClassData implementation, string grainClassNamePrefix);
         bool TryGetGrainClassData(int grainInterfaceId, out GrainClassData implementation, string grainClassNamePrefix);
@@ -20,7 +20,7 @@ namespace Orleans.Runtime
     /// Internal data structure that holds a grain interfaces to grain classes map.
     /// </summary>
     [Serializable]
-    internal class GrainTypeMap : IGrainTypeResolver
+    internal class GrainTypeMap : IGrainTypeMap
     {
         /// <summary>
         /// Metadata for a grain interface

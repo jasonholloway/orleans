@@ -38,7 +38,7 @@ namespace Orleans.Runtime
         private readonly InvocationMethodInfoMap invocationMethodInfoMap = new InvocationMethodInfoMap();
         public TimeSpan ResponseTimeout { get; private set; }
         private readonly GrainTypeManager typeManager;
-        private IGrainTypeResolver grainTypeResolver;
+        private IGrainTypeMap grainTypeMap;
 
         internal readonly IConsistentRingProvider ConsistentRingProvider;
         
@@ -697,12 +697,12 @@ namespace Orleans.Runtime
 
         internal void Start()
         {
-            grainTypeResolver = typeManager.GetGrainTypeResolver();
+            grainTypeMap = typeManager.GetGrainTypeMap();
         }
 
-        public IGrainTypeResolver GrainTypeResolver
+        public IGrainTypeMap GrainTypeMap
         {
-            get { return grainTypeResolver; }
+            get { return grainTypeMap; }
         }
 
         private void CheckValidReminderServiceType(string doingWhat)

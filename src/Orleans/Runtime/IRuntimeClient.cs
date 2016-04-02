@@ -77,7 +77,7 @@ namespace Orleans.Runtime
 
         Streams.IStreamProviderRuntime CurrentStreamProviderRuntime { get; }
 
-        IGrainTypeResolver GrainTypeResolver { get; }
+        IGrainTypeMap GrainTypeMap { get; }
 
         string CaptureRuntimeEnvironment();
 

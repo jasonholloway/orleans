@@ -275,10 +275,10 @@ namespace Orleans.Messaging
             }
         }
 
-        public Task<IGrainTypeResolver> GetGrainTypeResolver(GrainFactory grainFactory)
+        public Task<IGrainTypeMap> GetGrainTypeMap(GrainFactory grainFactory)
         {
             var silo = GetLiveGatewaySiloAddress();
-            return GetTypeManager(silo, grainFactory).GetGrainTypeResolver(silo);
+            return GetTypeManager(silo, grainFactory).GetGrainTypeMap(silo);
         }
 
         public Task<Streams.ImplicitStreamSubscriberTable> GetImplicitStreamSubscriberTable(GrainFactory grainFactory)

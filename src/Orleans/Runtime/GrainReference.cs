@@ -417,7 +417,7 @@ namespace Orleans.Runtime
         {
             if (RuntimeClient.Current == null) return false;
 
-            return RuntimeClient.Current.GrainTypeResolver != null && RuntimeClient.Current.GrainTypeResolver.IsUnordered(GrainId.GetTypeCode());
+            return RuntimeClient.Current.GrainTypeMap != null && RuntimeClient.Current.GrainTypeMap.IsUnordered(GrainId.GetTypeCode());
         }
         
         #endregion

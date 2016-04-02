@@ -10,10 +10,10 @@ namespace Orleans.Runtime
         internal static GrainClassData GetImplementation(Type interfaceType, string grainClassNamePrefix = null)
         {
             GrainClassData implementation;
-            IGrainTypeResolver grainTypeResolver = RuntimeClient.Current.GrainTypeResolver;
-            if (!grainTypeResolver.TryGetGrainClassData(interfaceType, out implementation, grainClassNamePrefix))
+            IGrainTypeMap grainTypeMap = RuntimeClient.Current.GrainTypeMap;
+            if (!grainTypeMap.TryGetGrainClassData(interfaceType, out implementation, grainClassNamePrefix))
             {
-                var loadedAssemblies = grainTypeResolver.GetLoadedGrainAssemblies();
+                var loadedAssemblies = grainTypeMap.GetLoadedGrainAssemblies();
                 throw new ArgumentException(
                     String.Format("Cannot find an implementation class for grain interface: {0}{2}. Make sure the grain assembly was correctly deployed and loaded in the silo.{1}",
                                   interfaceType,
@@ -26,10 +26,10 @@ namespace Orleans.Runtime
         internal static GrainClassData GetImplementation(int interfaceId, string grainClassNamePrefix = null)
         {
             GrainClassData implementation;
-            var grainTypeResolver = RuntimeClient.Current.GrainTypeResolver;
-            if (grainTypeResolver.TryGetGrainClassData(interfaceId, out implementation, grainClassNamePrefix)) return implementation;
+            var grainTypeMap = RuntimeClient.Current.GrainTypeMap;
+            if (grainTypeMap.TryGetGrainClassData(interfaceId, out implementation, grainClassNamePrefix)) return implementation;
 
-            var loadedAssemblies = grainTypeResolver.GetLoadedGrainAssemblies();
+            var loadedAssemblies = grainTypeMap.GetLoadedGrainAssemblies();
             throw new ArgumentException(
                 String.Format("Cannot find an implementation class for grain interface: {0}{2}. Make sure the grain assembly was correctly deployed and loaded in the silo.{1}",
                     interfaceId,
@@ -40,8 +40,8 @@ namespace Orleans.Runtime
         internal static GrainClassData GetImplementation(string grainImplementationClassName)
         {
             GrainClassData implementation;
-            var grainTypeResolver = RuntimeClient.Current.GrainTypeResolver;
-            if (!grainTypeResolver.TryGetGrainClassData(grainImplementationClassName, out implementation))
+            var grainTypeMap = RuntimeClient.Current.GrainTypeMap;
+            if (!grainTypeMap.TryGetGrainClassData(grainImplementationClassName, out implementation))
                 throw new ArgumentException(String.Format("Cannot find an implementation grain class: {0}. Make sure the grain assembly was correctly deployed and loaded in the silo.", grainImplementationClassName));
 
             return implementation;

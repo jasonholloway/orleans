@@ -168,7 +168,7 @@ namespace Orleans.Runtime
             return grainTypes.TryGetValue(name, out result);
         }
         
-        internal IGrainTypeResolver GetGrainTypeResolver()
+        internal IGrainTypeMap GetGrainTypeMap()
         {
             // the map is immutable at this point - should just expose interface
             return grainTypeMap;

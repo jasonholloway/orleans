@@ -8,7 +8,7 @@ namespace Orleans.Runtime
     /// </summary>
     internal interface ITypeManager : ISystemTarget
     {
-        Task<IGrainTypeResolver> GetGrainTypeResolver(SiloAddress silo);
+        Task<IGrainTypeMap> GetGrainTypeMap(SiloAddress silo);
 
         Task<Streams.ImplicitStreamSubscriberTable> GetImplicitStreamSubscriberTable(SiloAddress silo);
     }
