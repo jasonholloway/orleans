@@ -20,7 +20,7 @@ namespace Orleans.Runtime
     /// Internal data structure that holds a grain interfaces to grain classes map.
     /// </summary>
     [Serializable]
-    internal class GrainInterfaceMap : IGrainTypeResolver
+    internal class GrainTypeMap : IGrainTypeResolver
     {
         /// <summary>
         /// Metadata for a grain interface
@@ -77,7 +77,7 @@ namespace Orleans.Runtime
         private readonly bool localTestMode;
         private readonly HashSet<string> loadedGrainAsemblies;
 
-        public GrainInterfaceMap(bool localTestMode)
+        public GrainTypeMap(bool localTestMode)
         {
             table = new Dictionary<int, GrainInterfaceData>();
             typeToInterfaceData = new Dictionary<string, GrainInterfaceData>();
@@ -354,7 +354,7 @@ namespace Orleans.Runtime
     internal sealed class GrainClassData
     {
         [NonSerialized]
-        private readonly GrainInterfaceMap.GrainInterfaceData interfaceData;
+        private readonly GrainTypeMap.GrainInterfaceData interfaceData;
         [NonSerialized]
         private readonly Dictionary<string, string> genericClassNames;
         
@@ -365,11 +365,11 @@ namespace Orleans.Runtime
         internal int GrainTypeCode { get; private set; }
         internal string GrainClass { get; private set; }
         internal PlacementStrategy PlacementStrategy { get { return placementStrategy; } }
-        internal GrainInterfaceMap.GrainInterfaceData InterfaceData { get { return interfaceData; } }
+        internal GrainTypeMap.GrainInterfaceData InterfaceData { get { return interfaceData; } }
         internal bool IsGeneric { get { return isGeneric; } }
         public MultiClusterRegistrationStrategy RegistrationStrategy { get { return registrationStrategy; } }
 
-        internal GrainClassData(int grainTypeCode, string grainClass, bool isGeneric, GrainInterfaceMap.GrainInterfaceData interfaceData, PlacementStrategy placement, MultiClusterRegistrationStrategy registrationStrategy)
+        internal GrainClassData(int grainTypeCode, string grainClass, bool isGeneric, GrainTypeMap.GrainInterfaceData interfaceData, PlacementStrategy placement, MultiClusterRegistrationStrategy registrationStrategy)
         {
             GrainTypeCode = grainTypeCode;
             GrainClass = grainClass;

@@ -9,12 +9,12 @@ using System.Threading.Tasks;
 namespace Orleans.Runtime
 { 
         
-    internal static class GrainInterfaceMapper
+    internal static class GrainTypeMapper
     {
         
-        public static GrainInterfaceMap BuildMap(IEnumerable<GrainTypeData> grainTypeDatas, bool localTestMode) 
+        public static GrainTypeMap BuildMap(IEnumerable<GrainTypeData> grainTypeDatas, bool localTestMode) 
         {
-            var map = new GrainInterfaceMap(localTestMode);
+            var map = new GrainTypeMap(localTestMode);
             
             foreach(var typeData in grainTypeDatas) 
             {

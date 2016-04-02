@@ -250,7 +250,7 @@
     <Compile Include="Statistics\MessagingProcessingStatisticsGroup.cs" />
     <Compile Include="Messaging\GatewayClientReceiver.cs" />
     <Compile Include="Messaging\GatewayConnection.cs" />
-    <Compile Include="Runtime\GrainInterfaceMap.cs" />
+    <Compile Include="Runtime\GrainTypeMap.cs" />
     <Compile Include="Messaging\OutgoingMessageSender.cs" />
     <Compile Include="Streams\Core\IAsyncObserver.cs" />
     <Compile Include="Runtime\ITypeManager.cs" />

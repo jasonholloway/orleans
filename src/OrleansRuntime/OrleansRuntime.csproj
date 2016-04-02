@@ -59,7 +59,7 @@
     <Compile Include="GrainDirectory\MultiClusterRegistration\RegistrarManager.cs" />
     <Compile Include="GrainDirectory\MultiClusterRegistration\ClusterLocalRegistrar.cs" />
     <Compile Include="GrainTypeManager\GenericGrainTypeData.cs" />
-    <Compile Include="GrainTypeManager\GrainInterfaceMapper.cs" />
+    <Compile Include="GrainTypeManager\GrainTypeMapper.cs" />
     <Compile Include="MembershipService\ISiloStatusListener.cs" />
     <Compile Include="MembershipService\ISiloStatusOracle.cs" />
     <Compile Include="Messaging\IInboundMessageQueue.cs" />

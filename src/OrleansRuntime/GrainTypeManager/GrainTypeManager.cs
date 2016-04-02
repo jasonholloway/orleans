@@ -13,7 +13,7 @@ namespace Orleans.Runtime
     internal class GrainTypeManager
     {
         private IDictionary<string, GrainTypeData> grainTypes;
-        private GrainInterfaceMap grainInterfaceMap;
+        private GrainTypeMap grainInterfaceMap;
         private readonly IGrainFactory grainFactory;
         private readonly TraceLogger logger = TraceLogger.GetLogger("GrainTypeManager");
         private readonly Dictionary<int, InvokerData> invokers = new Dictionary<int, InvokerData>();
@@ -31,7 +31,7 @@ namespace Orleans.Runtime
         public GrainTypeManager(bool localTestMode, IGrainFactory grainFactory)
         {
             this.grainFactory = grainFactory;
-            grainInterfaceMap = new GrainInterfaceMap(localTestMode);
+            grainInterfaceMap = new GrainTypeMap(localTestMode);
             lock (lockable)
             {
                 if (Instance != null)
@@ -145,7 +145,7 @@ namespace Orleans.Runtime
 
         private void InitializeInterfaceMap()
         {
-            grainInterfaceMap = GrainInterfaceMapper.BuildMap(grainTypes.Values, false);            
+            grainInterfaceMap = GrainTypeMapper.BuildMap(grainTypes.Values, false);            
         }
         
 
@@ -168,7 +168,7 @@ namespace Orleans.Runtime
             return grainTypes.TryGetValue(name, out result);
         }
         
-        internal GrainInterfaceMap GetTypeCodeMap()
+        internal GrainTypeMap GetTypeCodeMap()
         {
             // the map is immutable at this point - should just expose interface
             return grainInterfaceMap;

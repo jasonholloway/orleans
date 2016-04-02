@@ -11,7 +11,7 @@ using Orleans.Concurrency;
 
 namespace UnitTests
 {
-    public class GrainInterfaceMappingTests 
+    public class GrainTypeMappingTests 
     {   
 
         abstract class TestClasses
@@ -86,7 +86,7 @@ namespace UnitTests
 
 
 
-        [Fact, TestCategory("GrainInterfaceMapping")]
+        [Fact, TestCategory("GrainTypeMapping")]
         public void IncludesAllImplementedInterfaces()
         {
             var typeDatas = GenerateTypeDataFrom<TestClasses>();
@@ -95,7 +95,7 @@ namespace UnitTests
                                         .Distinct()
                                         .Select(t => GrainInterfaceUtils.GetGrainInterfaceId(t));
 
-            var map = GrainInterfaceMapper.BuildMap(typeDatas, false);
+            var map = GrainTypeMapper.BuildMap(typeDatas, false);
 
             foreach(var ifaceID in ifaceIDs) {
                 Assert.IsTrue(map.ContainsGrainInterface(ifaceID));
@@ -103,7 +103,7 @@ namespace UnitTests
         }
 
 
-        [Fact, TestCategory("GrainInterfaceMapping")]
+        [Fact, TestCategory("GrainTypeMapping")]
         public void EachInterfaceHasOnePrimaryImplementation() 
         {            
             var typeDatas = GenerateTypeDataFrom<TestClasses>();
@@ -112,7 +112,7 @@ namespace UnitTests
                                         .Distinct()
                                         .Select(t => TypeUtils.GetRawClassName(t.GetFullName()));
 
-            var map = GrainInterfaceMapper.BuildMap(typeDatas, false);
+            var map = GrainTypeMapper.BuildMap(typeDatas, false);
 
             foreach(var ifaceName in ifaceNames) {
                 string implName;
@@ -121,12 +121,12 @@ namespace UnitTests
         }
 
 
-        [Fact, TestCategory("GrainInterfaceMapping")]
+        [Fact, TestCategory("GrainTypeMapping")]
         public void MatchingNameMeansPrimaryImplementation() 
         {
             var typeDatas = GenerateTypeDataFrom<TestClasses>();
             
-            var map = GrainInterfaceMapper.BuildMap(typeDatas, false);
+            var map = GrainTypeMapper.BuildMap(typeDatas, false);
                         
             string grainName;
             Assert.IsTrue(map.TryGetPrimaryImplementation(typeof(TestClasses.IGrain1).GetFullName(), out grainName));
@@ -134,12 +134,12 @@ namespace UnitTests
         }
 
 
-        [Fact, TestCategory("GrainInterfaceMapping")]
+        [Fact, TestCategory("GrainTypeMapping")]
         public void OnlyStatelessWorkersAreUnordered() 
         {
             var typeDatas = GenerateTypeDataFrom<TestClasses>();
 
-            var map = GrainInterfaceMapper.BuildMap(typeDatas, false);
+            var map = GrainTypeMapper.BuildMap(typeDatas, false);
             
             Assert.IsTrue(map.IsUnordered(GrainInterfaceUtils.GetGrainClassTypeCode(typeof(TestClasses.Grain3))));
             Assert.IsTrue(map.IsUnordered(GrainInterfaceUtils.GetGrainClassTypeCode(typeof(TestClasses.Grain4))));
