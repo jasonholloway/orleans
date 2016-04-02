@@ -13,7 +13,7 @@ namespace Orleans.Runtime
     internal class GrainTypeManager
     {
         private IDictionary<string, GrainTypeData> grainTypes;
-        private GrainTypeMap grainInterfaceMap;
+        private GrainTypeMap grainTypeMap;
         private readonly IGrainFactory grainFactory;
         private readonly TraceLogger logger = TraceLogger.GetLogger("GrainTypeManager");
         private readonly Dictionary<int, InvokerData> invokers = new Dictionary<int, InvokerData>();
@@ -31,7 +31,7 @@ namespace Orleans.Runtime
         public GrainTypeManager(bool localTestMode, IGrainFactory grainFactory)
         {
             this.grainFactory = grainFactory;
-            grainInterfaceMap = new GrainTypeMap(localTestMode);
+            grainTypeMap = new GrainTypeMap(localTestMode);
             lock (lockable)
             {
                 if (Instance != null)
@@ -59,13 +59,13 @@ namespace Orleans.Runtime
             // 4. We scan types in memory for grain method invoker objects.
             InitializeInvokerMap(loader, strict);
             
-            InitializeInterfaceMap();
+            InitializeGrainTypeMap();
             StreamingInitialize();
         }
 
         public Dictionary<string, string> GetGrainInterfaceToClassMap()
         {
-            return grainInterfaceMap.GetPrimaryImplementations();
+            return grainTypeMap.GetPrimaryImplementations();
         }
 
         internal GrainTypeData this[string className]
@@ -78,7 +78,7 @@ namespace Orleans.Runtime
                 {
                     string grainType;
 
-                    if (grainInterfaceMap.TryGetPrimaryImplementation(className, out grainType))
+                    if (grainTypeMap.TryGetPrimaryImplementation(className, out grainType))
                         return grainTypes[grainType];
                     if (grainTypes.ContainsKey(className))
                         return grainTypes[className];
@@ -86,7 +86,7 @@ namespace Orleans.Runtime
                     if (TypeUtils.IsGenericClass(className))
                     {
                         var templateName = TypeUtils.GetRawClassName(className);
-                        if (grainInterfaceMap.TryGetPrimaryImplementation(templateName, out grainType))
+                        if (grainTypeMap.TryGetPrimaryImplementation(templateName, out grainType))
                             templateName = grainType;
 
                         if (grainTypes.ContainsKey(templateName))
@@ -123,7 +123,7 @@ namespace Orleans.Runtime
 
         internal void GetTypeInfo(int typeCode, out string grainClass, out PlacementStrategy placement, out MultiClusterRegistrationStrategy activationStrategy, string genericArguments = null)
         {
-            if (!grainInterfaceMap.TryGetTypeInfo(typeCode, out grainClass, out placement, out activationStrategy, genericArguments))
+            if (!grainTypeMap.TryGetTypeInfo(typeCode, out grainClass, out placement, out activationStrategy, genericArguments))
                 throw new OrleansException(String.Format("Unexpected: Cannot find an implementation class for grain interface {0}", typeCode));
         }
 
@@ -143,9 +143,9 @@ namespace Orleans.Runtime
             }
         }
 
-        private void InitializeInterfaceMap()
+        private void InitializeGrainTypeMap()
         {
-            grainInterfaceMap = GrainTypeMapper.BuildMap(grainTypes.Values, false);            
+            grainTypeMap = GrainTypeMapper.BuildMap(grainTypes.Values, false);            
         }
         
 
@@ -171,7 +171,7 @@ namespace Orleans.Runtime
         internal GrainTypeMap GetTypeCodeMap()
         {
             // the map is immutable at this point - should just expose interface
-            return grainInterfaceMap;
+            return grainTypeMap;
         }
 
         private void AddInvokerClass(int interfaceId, Type invoker)
@@ -197,7 +197,7 @@ namespace Orleans.Runtime
             }
 
             Type type;
-            var interfaceName = grainInterfaceMap.TryGetServiceInterface(interfaceId, out type) ?
+            var interfaceName = grainTypeMap.TryGetServiceInterface(interfaceId, out type) ?
                 type.FullName : "*unavailable*";
 
             throw new OrleansException(String.Format("Cannot find an invoker for interface {0} (ID={1},0x{1, 8:X8}).",
