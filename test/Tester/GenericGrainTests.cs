@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using TestGrainInterfaces;
 using Xunit;
 using Tester;
+using System.Linq;
 
 namespace UnitTests.General
 {
@@ -665,6 +666,335 @@ namespace UnitTests.General
 
             Assert.AreEqual(result, "Hello!");
         }
-
+        
     }
+
+
+
+
+    public class GenericEdgeCases : HostedTestClusterEnsureDefaultStarted
+    {
+        
+        public interface IBasicGrainSayingHello : IGrainWithGuidKey
+        {
+            Task<string> Hello();
+            Task<string[]> ConcreteGenArgTypeNames();
+        }
+
+        public abstract class BasicGrainSayingHello : Grain
+        {
+            public Task<string> Hello() {
+                return Task.FromResult("Hello!");
+            }
+
+            public Task<string[]> ConcreteGenArgTypeNames() 
+            {
+                var grainType = GetImmediateSubclass(this.GetType());
+
+                return Task.FromResult(
+                                grainType.GetGenericArguments()
+                                            .Select(t => t.FullName)
+                                            .ToArray()
+                                );
+            }
+
+
+            Type GetImmediateSubclass(Type subject) {
+                if(subject.BaseType == typeof(BasicGrainSayingHello)) {
+                    return subject;
+                }
+
+                return GetImmediateSubclass(subject.BaseType);
+            }
+        }
+        
+        static async Task<Type[]> GetConcreteGenArgs(IBasicGrainSayingHello @this) {
+            var genArgTypeNames = await @this.ConcreteGenArgTypeNames();
+
+            return genArgTypeNames.Select(n => Type.GetType(n))
+                                    .ToArray();
+        }
+
+        
+
+
+        public interface IGrainWithTwoGenArgs<T1, T2> : IBasicGrainSayingHello
+        { }
+
+        public interface IGrainWithThreeGenArgs<T1, T2, T3> : IBasicGrainSayingHello
+        { }
+
+        public interface IGrainReceivingRepeatedGenArgs<T1, T2> : IBasicGrainSayingHello
+        { }
+
+
+        public class PartiallySpecifyingGrain<T> : BasicGrainSayingHello, IGrainWithTwoGenArgs<string, T>
+        { }
+                
+
+        [Fact, TestCategory("Generics")]
+        public async Task PartiallySpecifyingGenericGrainFulfilsInterface() 
+        {
+            var grain = GrainFactory.GetGrain<IGrainWithTwoGenArgs<string, int>>(Guid.NewGuid());
+
+            var response = await grain.Hello();
+
+            Assert.AreEqual(response, "Hello!");
+        }
+        
+
+
+
+        public interface IPartiallySpecifyingInterface<T> : IGrainWithTwoGenArgs<T, int>
+        { }
+
+        public class GrainWithPartiallySpecifyingInterface<T> : BasicGrainSayingHello, IPartiallySpecifyingInterface<T>
+        { }
+
+
+        public class GrainSpecifyingSameGenArgTwice<T> : BasicGrainSayingHello, IGrainReceivingRepeatedGenArgs<T, T>
+        { }
+
+
+        [Fact, TestCategory("Generics")]
+        public async Task GenericGrainCanReuseOwnGenArgRepeatedly() {
+            //resolves correctly but can't be activated: too many gen args supplied for concrete class
+
+            var grain = GrainFactory.GetGrain<IGrainReceivingRepeatedGenArgs<int, int>>(Guid.NewGuid());
+            
+            var concreteGenArgs = await GetConcreteGenArgs(grain);
+
+            Assert.IsTrue(
+                    concreteGenArgs.SequenceEqual(new[] { typeof(int) })
+                    );
+        }
+
+
+        [Fact, TestCategory("Generics")]
+        public async Task PartiallySpecifyingGenericInterfaceIsCastable() {
+            var grain = GrainFactory.GetGrain<IPartiallySpecifyingInterface<string>>(Guid.NewGuid());
+
+            var castRef = grain.AsReference<IGrainWithTwoGenArgs<string, int>>();
+
+            var response = await castRef.Hello();
+
+            Assert.AreEqual(response, "Hello!");
+        }
+
+
+
+
+
+        public interface IReceivingRepeatedGenArgsAmongstOthers<T1, T2, T3> : IBasicGrainSayingHello
+        { }
+
+        public class SpecifyingRepeatedGenArgsAmongstOthers<T1, T2> : BasicGrainSayingHello, IReceivingRepeatedGenArgsAmongstOthers<T2, T1, T2>
+        { }
+
+
+        [Fact, TestCategory("Generics")]
+        public async Task RepeatedRearrangedGenArgsWork() {
+            //again resolves to the correct generic type definition, but fails on activation as too many args
+            //gen args aren't being properly inferred from matched concrete type
+
+            var grain = GrainFactory.GetGrain<IReceivingRepeatedGenArgsAmongstOthers<int, string, int>>(Guid.NewGuid());
+            
+            var concreteGenArgs = await GetConcreteGenArgs(grain);
+
+            Assert.IsTrue(
+                    concreteGenArgs.SequenceEqual(new[] { typeof(string), typeof(int) })
+                    );            
+        }
+
+
+
+
+        public interface IReceivingRepeatedGenArgsFromOtherInterface<T1, T2, T3> : IBasicGrainSayingHello
+        { }
+
+        public interface ISpecifyingGenArgsRepeatedlyToParentInterface<T> : IReceivingRepeatedGenArgsFromOtherInterface<T, T, T>
+        { }
+
+        public class GrainForTestingCastingBetweenInterfacesWithReusedGenArgs : BasicGrainSayingHello, ISpecifyingGenArgsRepeatedlyToParentInterface<bool>
+        { }
+
+
+        [Fact, TestCategory("Generics")]
+        public async Task RepeatedGenArgsWorkAmongstInterfacesInTypeResolution() 
+        {
+            var grain = GrainFactory.GetGrain<IReceivingRepeatedGenArgsFromOtherInterface<bool, bool, bool>>(Guid.NewGuid());
+            
+            var concreteGenArgs = await GetConcreteGenArgs(grain);
+
+            Assert.IsTrue(
+                    concreteGenArgs.SequenceEqual(Enumerable.Empty<Type>())
+                    );
+        }
+
+
+        [Fact, TestCategory("Generics")]
+        public async Task RepeatedGenArgsWorkAmongstInterfacesInCasting() 
+        {
+            //Only errors on invocation: wrong arity again
+
+            var grain = GrainFactory.GetGrain<IReceivingRepeatedGenArgsFromOtherInterface<bool, bool, bool>>(Guid.NewGuid());
+
+            var castRef = grain.AsReference<ISpecifyingGenArgsRepeatedlyToParentInterface<bool>>();
+               
+            var response = await castRef.Hello();
+
+            Assert.AreEqual(response, "Hello!");
+        }
+
+
+
+
+
+        public interface IReceivingRearrangedGenArgs<T1, T2> : IBasicGrainSayingHello
+        { } 
+
+        public class SpecifyingSameGenArgsButRearranged<T1, T2> : BasicGrainSayingHello, IReceivingRearrangedGenArgs<T2, T1>
+        { }
+
+
+        [Fact, TestCategory("Generics")]
+        public async Task RearrangedGenArgsOfCorrectArityAreResolved() 
+        {
+            //'an item of the same key has already been added' - which hints that, at some point, the correct gen args have been asserted
+            //but then later on mixed up - does this sound likely?? 
+
+            var grain = GrainFactory.GetGrain<IReceivingRearrangedGenArgs<int, long>>(Guid.NewGuid());
+            
+            var concreteGenArgs = await GetConcreteGenArgs(grain);
+
+            Assert.IsTrue(
+                    concreteGenArgs.SequenceEqual(new[] { typeof(long), typeof(int) })
+                    );
+        }
+
+
+        
+
+        public interface IReceivingRearrangedGenArgsViaCast<T1, T2> : IBasicGrainSayingHello
+        { }
+
+        public interface ISpecifyingRearrangedGenArgsToParentInterface<T1, T2> : IReceivingRearrangedGenArgsViaCast<T2, T1>
+        { }
+
+        public class GrainForTestingCastingWithRearrangedGenArgs<T1, T2> : BasicGrainSayingHello, ISpecifyingRearrangedGenArgsToParentInterface<T1, T2>
+        { }
+
+        
+        [Fact, TestCategory("Generics")]
+        public async Task RearrangedGenArgsOfCorrectArityAreCastable() 
+        {
+            //Can't activate because item with same key added, as above
+
+            var grain = GrainFactory.GetGrain<ISpecifyingRearrangedGenArgsToParentInterface<int, long>>(Guid.NewGuid());
+
+            var castRef = grain.AsReference<IReceivingRearrangedGenArgsViaCast<long, int>>();
+
+            var response = await castRef.Hello();
+
+            Assert.AreEqual(response, "Hello!");
+        }
+
+
+
+
+        public interface IFullySpecifiedGenericInterface<T> : IBasicGrainSayingHello
+        { }
+
+        public interface IDerivedFromMultipleSpecializationsOfSameInterface : IFullySpecifiedGenericInterface<int>, IFullySpecifiedGenericInterface<long>
+        { }
+        
+        public class GrainFulfillingMultipleSpecializationsOfSameInterfaceViaIntermediate : BasicGrainSayingHello, IDerivedFromMultipleSpecializationsOfSameInterface
+        { }
+
+        
+        [Fact, TestCategory("Generics")]
+        public async Task CastingBetweenFullySpecifiedGenericInterfaces() 
+        {
+            //Is this legitimate? Solely in the realm of virtual grain interfaces - no special knowledge of implementation implicated, only of interface hierarchy
+
+            //codegen falling over: duplicate key when both specializations are matched to same concrete type
+
+            var grain = GrainFactory.GetGrain<IDerivedFromMultipleSpecializationsOfSameInterface>(Guid.NewGuid());
+
+            await grain.Hello();
+
+            var castRef = grain.AsReference<IFullySpecifiedGenericInterface<int>>();
+
+            await castRef.Hello();
+
+            var castRef2 = castRef.AsReference<IFullySpecifiedGenericInterface<long>>();
+
+            await castRef2.Hello();
+        }
+
+
+
+        
+        public interface IArbitraryInterface<T1, T2> : IBasicGrainSayingHello
+        { }
+
+        public interface IInterfaceUnrelatedToConcreteGenArgs<T> : IBasicGrainSayingHello
+        { }
+
+        public class GrainWithGenArgsUnrelatedToFullySpecifiedGenericInterface<T1, T2> : BasicGrainSayingHello, IArbitraryInterface<T1, T2>, IInterfaceUnrelatedToConcreteGenArgs<float>
+        { }
+
+
+        [Fact, TestCategory("Generics"), TestCategory("Jason's")]
+        public async Task CanCastToFullySpecifiedInterfaceUnrelatedToConcreteGenArgs() 
+        {
+            //'Item with same key has already been added' in codegen
+
+            //Is such a cast legitimate? It relies on special knowledge of the implementing grain.
+
+            var grain = GrainFactory.GetGrain<IArbitraryInterface<int, long>>(Guid.NewGuid());
+
+            await grain.Hello();
+
+            var castRef = grain.AsReference<IInterfaceUnrelatedToConcreteGenArgs<float>>();
+
+            var response = await grain.Hello();
+
+            Assert.AreEqual(response, "Hello!");
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+        //methods using genargs supplied by type
+
+
+
+
+        //Need to check for functionality without #1604
+        //could #1604 behaviour be separated out somehow?
+
+
+
+        //covariance
+        //...
+        
+
+        //contravariance
+        //...
+        
+    }
+
+
+
+
 }
