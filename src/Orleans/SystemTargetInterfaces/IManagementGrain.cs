@@ -106,7 +106,7 @@ namespace Orleans.Runtime
         /// <param name="arg">An opaque command argument.
         /// This is an opaque value to the Orleans runtime - the control protocol semantics are decided between the sender and provider.</param>
         /// <returns>Completion promise for this operation.</returns>
-        Task<object[]> SendControlCommandToProvider(string providerTypeFullName, string providerName, int command, object arg = null);
+        Task<object[]> SendControlCommandToProvider(string providerTypeFullName, string providerName, int command, object arg = null, bool quietMode = false);
         
         /// <summary>
         /// Update the configuration information dynamically. Only a subset of configuration information
