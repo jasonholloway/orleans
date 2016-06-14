@@ -57,7 +57,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Catalog\ActivationState.cs" />
+    <Compile Include="Catalog\GrainCreator.cs" />
     <Compile Include="Counters\PerfCounterConfigData.cs" />
+    <Compile Include="MultiClusterNetwork\MultiClusterData.cs" />
+    <Compile Include="MultiClusterNetwork\MultiClusterOracle.cs" />
+    <Compile Include="MultiClusterNetwork\MultiClusterOracleData.cs" />
+    <Compile Include="MultiClusterNetwork\MultiClusterOracleFactory.cs" />
+    <Compile Include="MultiClusterNetwork\IGossipChannel.cs" />
+    <Compile Include="MultiClusterNetwork\IMultiClusterOracle.cs" />
     <Compile Include="GrainDirectory\MultiClusterRegistration\RegistrarManager.cs" />
     <Compile Include="GrainDirectory\MultiClusterRegistration\ClusterLocalRegistrar.cs" />
     <Compile Include="GrainTypeManager\GenericGrainTypeData.cs" />
@@ -80,7 +87,7 @@
     <Compile Include="ConsistentRing\IConsistentRingProvider.cs" />
     <Compile Include="ConsistentRing\ConsistentRingProvider.cs" />
     <Compile Include="ConsistentRing\VirtualBucketsRingProvider.cs" />
-    <Compile Include="ConsistentRing\EquallyDevidedRangeRingProvider.cs" />
+    <Compile Include="ConsistentRing\EquallyDividedRangeRingProvider.cs" />
     <Compile Include="Core\IHealthCheckParticipant.cs" />
     <Compile Include="MembershipService\IMembershipOracle.cs" />
     <Compile Include="MembershipService\MembershipOracleData.cs" />
