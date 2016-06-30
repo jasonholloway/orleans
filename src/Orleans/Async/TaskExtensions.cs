@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
+using Orleans.Async;
 using Orleans.Runtime;
 
 namespace Orleans
@@ -171,7 +172,7 @@ namespace Orleans
             catch (Exception exc)
             {
                 var ignored = task.Exception; // Observe exception
-                logger.Error((int)errorCode, message, exc);
+                logger.Error(errorCode, message, exc);
                 throw;
             }
         }
@@ -284,11 +285,17 @@ namespace Orleans
             throw new TimeoutException(String.Format("WithTimeout has timed out after {0}.", timeSpan));
         }
 
-        internal static Task<T> FromException<T>(Exception exception)
+        internal static Task WrapInTask(Action action)
         {
-            var tcs = new TaskCompletionSource<T>(exception);
-            tcs.TrySetException(exception);
-            return tcs.Task;
+            try
+            {
+                action();
+                return TaskDone.Done;
+            }
+            catch (Exception exc)
+            {
+                return TaskUtility.Faulted(exc);
+            }
         }
 
         internal static Task<T> ConvertTaskViaTcs<T>(Task<T> task)

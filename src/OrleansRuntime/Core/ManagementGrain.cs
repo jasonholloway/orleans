@@ -21,7 +21,7 @@ namespace Orleans.Runtime.Management
 
         public override Task OnActivateAsync()
         {
-            logger = TraceLogger.GetLogger("ManagementGrain", TraceLogger.LoggerType.Runtime);
+            logger = LogManager.GetLogger("ManagementGrain", LoggerType.Runtime);
             return TaskDone.Done;
         }
 
@@ -248,9 +248,9 @@ namespace Orleans.Runtime.Management
         private async Task<object[]> ExecutePerSiloCall(Func<ISiloControl, Task<object>> action, string actionToLog = null)
         {
             var silos = await GetHosts(true);
-
-            if(actionToLog != null) {
-                logger.Info("Executing {0} against {1}", actionToLog, Utils.EnumerableToString(silos.Keys));
+            
+            if(logger.IsVerbose) {
+                logger.Verbose("Executing {0} against {1}", actionToLog, Utils.EnumerableToString(silos.Keys));
             }
 
             var actionPromises = new List<Task<object>>();
@@ -268,7 +268,7 @@ namespace Orleans.Runtime.Management
                 membershipTable = factory.GetMembershipTable(Silo.CurrentSilo.GlobalConfig.LivenessType, Silo.CurrentSilo.GlobalConfig.MembershipTableAssembly);
 
                 await membershipTable.InitializeMembershipTable(Silo.CurrentSilo.GlobalConfig, false,
-                    TraceLogger.GetLogger(membershipTable.GetType().Name));
+                    LogManager.GetLogger(membershipTable.GetType().Name));
             }
             return membershipTable;
         }

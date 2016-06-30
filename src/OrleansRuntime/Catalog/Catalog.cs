@@ -123,7 +123,7 @@ namespace Orleans.Runtime
         private readonly ActivationDirectory activations;
         private IStorageProviderManager storageProviderManager;
         private Dispatcher dispatcher;
-        private readonly TraceLogger logger;
+        private readonly Logger logger;
         private int collectionNumber;
         private int destroyActivationsNumber;
         private IDisposable gcTimer;
@@ -160,10 +160,9 @@ namespace Orleans.Runtime
             collectionNumber = 0;
             destroyActivationsNumber = 0;
 
-            // TODO: Change back to GetRequiredService after stable Microsoft.Framework.DependencyInjection is released and can be referenced here
             grainCreator = new GrainCreator(grainRuntime, Runtime.Silo.CurrentSilo.Services);
 
-            logger = TraceLogger.GetLogger("Catalog", TraceLogger.LoggerType.Runtime);
+            logger = LogManager.GetLogger("Catalog", Runtime.LoggerType.Runtime);
             this.config = config.Globals;
             setDispatcher = d => dispatcher = d;
             ActivationCollector = new ActivationCollector(config);
@@ -568,13 +567,13 @@ namespace Orleans.Runtime
                                                 primary != null ? "Primary Directory partition for this grain is " + primary + ". " : String.Empty,
                                     address.ToFullString(),
                                     activation.WaitingCount);
-                                if (activation.IsStatelessWorker)
+                                if (activation.IsUsingGrainDirectory)
                                 {
-                                    if (logger.IsVerbose) logger.Verbose(ErrorCode.Catalog_DuplicateActivation, logMsg);
+                                    logger.Info(ErrorCode.Catalog_DuplicateActivation, logMsg);
                                 }
                                 else
                                 {
-                                    logger.Info(ErrorCode.Catalog_DuplicateActivation, logMsg);
+                                    if (logger.IsVerbose) logger.Verbose(ErrorCode.Catalog_DuplicateActivation, logMsg);
                                 }
                                 RerouteAllQueuedMessages(activation, target, "Duplicate activation", ex);
                             }
@@ -584,7 +583,7 @@ namespace Orleans.Runtime
                                     String.Format("Failed to RegisterActivationInGrainDirectory for {0}.",
                                         activation), ex);
                                 // Need to undo the registration we just did earlier
-                                if (!activation.IsStatelessWorker)
+                                if (activation.IsUsingGrainDirectory)
                                 {
                                     scheduler.RunOrQueueTask(() => directory.UnregisterAsync(address),
                                         SchedulingContext).Ignore();
@@ -599,7 +598,7 @@ namespace Orleans.Runtime
                             logger.Warn(ErrorCode.Catalog_Failed_SetupActivationState,
                                 String.Format("Failed to SetupActivationState for {0}.", activation), ex);
                             // Need to undo the registration we just did earlier
-                            if (!activation.IsStatelessWorker)
+                            if (activation.IsUsingGrainDirectory)
                             {
                                 scheduler.RunOrQueueTask(() => directory.UnregisterAsync(address),
                                     SchedulingContext).Ignore();
@@ -613,7 +612,7 @@ namespace Orleans.Runtime
                             logger.Warn(ErrorCode.Catalog_Failed_InvokeActivate,
                                 String.Format("Failed to InvokeActivate for {0}.", activation), ex);
                             // Need to undo the registration we just did earlier
-                            if (!activation.IsStatelessWorker)
+                            if (activation.IsUsingGrainDirectory)
                             {
                                 scheduler.RunOrQueueTask(() => directory.UnregisterAsync(address),
                                     SchedulingContext).Ignore();
@@ -1020,7 +1019,7 @@ namespace Orleans.Runtime
                 try
                 {            
                     List<ActivationAddress> activationsToDeactivate = list.
-                        Where((ActivationData d) => !d.IsStatelessWorker).
+                        Where((ActivationData d) => d.IsUsingGrainDirectory).
                         Select((ActivationData d) => ActivationAddress.GetAddress(LocalSilo, d.Grain, d.ActivationId)).ToList();
 
                     if (activationsToDeactivate.Count > 0)
@@ -1180,10 +1179,11 @@ namespace Orleans.Runtime
         private async Task RegisterActivationInGrainDirectoryAndValidate(ActivationData activation)
         {
             ActivationAddress address = activation.Address;
-            bool singleActivationMode = !activation.IsStatelessWorker;
-
-            if (singleActivationMode)
+            // Currently, the only grain type that is not registered in the Grain Directory is StatelessWorker. 
+            // Among those that are registered in the directory, we currently do not have any multi activations.
+            if (activation.IsUsingGrainDirectory)
             {
+                
                 var result = await scheduler.RunOrQueueTask(() => directory.RegisterAsync(address, singleActivation:true), this.SchedulingContext);
                 if (address.Equals(result.Address)) return;
                
@@ -1229,10 +1229,7 @@ namespace Orleans.Runtime
         #endregion
         #region IPlacementContext
 
-        public TraceLogger Logger
-        {
-            get { return logger; }
-        }
+        public Logger Logger => logger;
 
         public bool FastLookup(GrainId grain, out AddressesAndTag addresses)
         {
@@ -1328,6 +1325,7 @@ namespace Orleans.Runtime
                         try
                         {
                             var activationData = activation.Value;
+                            if (!activationData.IsUsingGrainDirectory) continue;
                             if (!directory.GetPrimaryForGrain(activationData.Grain).Equals(updatedSilo)) continue;
 
                             lock (activationData)
